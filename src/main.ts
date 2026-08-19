@@ -11,6 +11,8 @@ import { InfoCard } from './ui/infocard';
 import { LayerPanel } from './ui/panel';
 import { startClock } from './ui/clock';
 import { mountHeader } from './ui/header';
+import { HereMarker } from './globe/here';
+import { countAboveHorizon, nextPass, MIN_ELEVATION_DEG } from './utils/observer';
 import { inject as injectAnalytics } from '@vercel/analytics';
 import { setupPicking } from './core/picking';
 import { QualityMonitor, QualityController } from './core/quality';
@@ -135,6 +137,68 @@ document.addEventListener('visibilitychange', () => {
     layers.setActive(true);
     quality.resume();
   }
+});
+
+const hereMarker = new HereMarker(app.scene);
+
+// "내 위치": 지금 내 머리 위에 무엇이 있는지 답한다.
+// 위치 권한을 요청하고, 허용되면 그 지점으로 카메라를 돌린 뒤 ISS 다음 통과 시각과
+// 지금 지평선 위에 떠 있는 위성 수를 카드에 띄운다. 계산은 이미 받아둔 TLE로
+// 브라우저에서 수행한다(서버 없음).
+panel.addAction('내 위치', () => {
+  if (!navigator.geolocation) {
+    infoCard.show('내 위치', [['오류', '이 브라우저는 위치 기능을 지원하지 않습니다']]);
+    return;
+  }
+  infoCard.show('내 위치', [['상태', '위치를 확인하는 중…']]);
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+      hereMarker.show(lat, lon);
+      app.flyTo(hereMarker.directionOf(lat, lon));
+
+      const rows: Array<[string, string]> = [
+        ['좌표', `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`],
+      ];
+
+      const satrecs = satelliteLayer.getSatrecs();
+      if (satrecs.length === 0) {
+        // 위성 레이어를 한 번도 켜지 않았거나 TLE를 받지 못한 상태.
+        rows.push(['위성', '궤도 데이터를 아직 받지 못했습니다 — 위성 레이어를 켜보세요']);
+        infoCard.show('내 위치', rows);
+        return;
+      }
+
+      const now = new Date();
+      const visible = countAboveHorizon(satrecs, now, { lat, lon });
+      rows.push(['지금 머리 위', `추적 중인 위성 ${visible}개 (고도 ${MIN_ELEVATION_DEG}° 이상)`]);
+
+      const iss = satelliteLayer.findSatrec('ISS');
+      if (iss) {
+        const pass = nextPass(iss, now, { lat, lon });
+        rows.push(
+          pass
+            ? [
+                'ISS 다음 통과',
+                `${pass.start.toLocaleString('ko-KR')} (최대 고도 ${Math.round(pass.maxElevationDeg)}°)`,
+              ]
+            : ['ISS 다음 통과', '앞으로 24시간 안에는 지나가지 않습니다'],
+        );
+      }
+
+      infoCard.show('내 위치', rows);
+    },
+    (err) => {
+      const reason =
+        err.code === err.PERMISSION_DENIED
+          ? '위치 권한이 거부되었습니다'
+          : '위치를 가져오지 못했습니다';
+      infoCard.show('내 위치', [['오류', reason]]);
+    },
+    { timeout: 10_000, maximumAge: 60_000 },
+  );
 });
 
 mountHeader(uiRoot);

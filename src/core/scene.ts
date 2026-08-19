@@ -18,6 +18,12 @@ export class SceneApp {
   private introDir = new THREE.Vector3(0, 0, 1);
   private introStartRadius = 4.5;
   private introTargetRadius = 2.5;
+  private flyActive = false;
+  private flyStart = 0;
+  private flyDuration = 0;
+  private flyFrom = new THREE.Vector3();
+  private flyTo_ = new THREE.Vector3();
+  private flyRadius = 2.5;
 
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -89,6 +95,24 @@ export class SceneApp {
     return SceneApp.VISUAL_RADIUS / Math.sin(angle);
   }
 
+  /**
+   * 카메라를 지정한 방향으로 부드럽게 돌린다(거리는 유지).
+   *
+   * 인트로와 마찬가지로 위치를 즉시 옮기지 않고 현재 지점에서 보간한다.
+   * 자동 자전은 멈춘다 — 사용자가 특정 지점을 보려고 요청한 상황이므로
+   * 도착하자마자 회전해 흘러가면 의도와 어긋난다.
+   */
+  flyTo(direction: THREE.Vector3, durationMs = 1200): void {
+    this.introActive = false; // 인트로 중이면 양보한다
+    this.controls.autoRotate = false;
+    this.flyActive = true;
+    this.flyStart = performance.now();
+    this.flyDuration = durationMs;
+    this.flyRadius = this.camera.position.length() || this.fitDistance();
+    this.flyFrom.copy(this.camera.position).normalize();
+    this.flyTo_.copy(direction).normalize();
+  }
+
   playIntro(durationMs: number): void {
     this.introActive = true;
     this.introStart = performance.now();
@@ -108,6 +132,14 @@ export class SceneApp {
         // 인트로 동안은 방향(방위각)을 고정한 채 거리만 좁혀 들어간다 (점프컷 방지).
         this.camera.position.copy(this.introDir).multiplyScalar(radius);
         if (t >= 1) this.introActive = false;
+      }
+      if (this.flyActive) {
+        const t = Math.min((performance.now() - this.flyStart) / this.flyDuration, 1);
+        const eased = 1 - Math.pow(1 - t, 3);
+        // 두 방향 사이를 구면 보간해 지구 표면을 따라 도는 궤적으로 이동한다.
+        const dir = this.flyFrom.clone().lerp(this.flyTo_, eased).normalize();
+        this.camera.position.copy(dir).multiplyScalar(this.flyRadius);
+        if (t >= 1) this.flyActive = false;
       }
       this.controls.update();
       for (const cb of this.frameCallbacks) cb(time);

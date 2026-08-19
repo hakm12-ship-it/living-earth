@@ -219,3 +219,21 @@ test('위성 토글을 켜면 위성 마커가 실제로 화면에 나타난다 
   expect(sawSatellite, `모든 카메라 각도에서 위성 색 픽셀이 3개 이하였음 (최대: ${maxCount})`).toBe(true);
   expectNoErrors();
 });
+
+test('내 위치를 누르면 좌표와 상공 정보를 보여준다', async ({ page, context }) => {
+  // 위치는 브라우저 권한이 필요하므로 고정 좌표(서울)를 주입한다. 통과 예측 계산
+  // 자체는 유닛 테스트가 덮고, 여기서는 권한 → 좌표 → 카드까지의 배선을 지킨다.
+  await context.grantPermissions(['geolocation']);
+  await context.setGeolocation({ latitude: 37.5665, longitude: 126.978 });
+
+  await page.goto('/');
+  await page.waitForTimeout(3000);
+
+  await page.getByRole('button', { name: '내 위치' }).click();
+
+  const card = page.getByTestId('info-card');
+  await expect(card).toBeVisible();
+  await expect(card).toContainText('37.57');
+  await expect(card).toContainText('126.98');
+  expectNoErrors();
+});

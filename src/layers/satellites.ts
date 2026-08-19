@@ -10,6 +10,8 @@ import { LayerFade } from './fade';
 const PROPAGATE_MS = 500;
 const TLE_CACHE_KEY = 'celestrak-tle';
 const TLE_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 하루 1회 갱신
+/** 목록을 잘라낼 때 반드시 남겨야 하는 위성(이름 일부, 대문자). */
+const PRIORITY = ['ISS (ZARYA)'];
 
 // 위성 레이어: CelesTrak "visual" 그룹의 TLE를 하루 1회 캐싱해 가져오고,
 // satellite.js(SGP4)로 초당 2회 propagation한 뒤 프레임 사이는 보간(lerp)한다.
@@ -100,7 +102,15 @@ export class SatelliteLayer implements Layer {
     // "유령 위성" 인스턴스가 생긴다(피킹 대상에 지구본이 없어 클릭 시 선택될 수 있음).
     // 빌드 이후 시점에 propagate가 실패하는 경우는 update()의 propagate()에서
     // 마지막으로 유효했던 위치(prevPos)를 그대로 유지하도록 처리한다(원점행 없음).
-    const pairs = entries
+    // 저사양 프로파일에서 목록을 자를 때 앞에서부터 잘라내면 ISS처럼 사람들이
+    // 실제로 찾는 위성이 조용히 빠진다(CelesTrak 목록에서 ISS는 100번째 언저리).
+    // "내 위치"의 통과 예측이 ISS에 의존하므로 우선순위 위성을 앞으로 당겨둔다.
+    const prioritized = [
+      ...entries.filter((e) => PRIORITY.some((k) => e.name.toUpperCase().includes(k))),
+      ...entries.filter((e) => !PRIORITY.some((k) => e.name.toUpperCase().includes(k))),
+    ];
+
+    const pairs = prioritized
       .slice(0, this.maxCount)
       .map((e) => ({ name: e.name, rec: satellite.twoline2satrec(e.line1, e.line2) }))
       .filter((p) => p.rec.error === 0)
@@ -191,6 +201,22 @@ export class SatelliteLayer implements Layer {
 
   getSatName(instanceId: number): string | undefined {
     return this.names[instanceId];
+  }
+
+  /**
+   * 현재 추적 중인 위성들의 궤도 계산 객체.
+   *
+   * "내 위치" 기능이 관측자 기준 고도각을 구할 때 쓴다. 레이어가 꺼져 있어도
+   * TLE는 이미 받아둔 상태이므로, 위성 표시 여부와 무관하게 계산할 수 있다.
+   */
+  getSatrecs(): satellite.SatRec[] {
+    return this.satrecs;
+  }
+
+  /** 이름과 궤도 계산 객체를 쌍으로. 인덱스는 getSatName과 같다. */
+  findSatrec(nameFragment: string): satellite.SatRec | undefined {
+    const i = this.names.findIndex((n) => n.toUpperCase().includes(nameFragment.toUpperCase()));
+    return i >= 0 ? this.satrecs[i] : undefined;
   }
 
   // 선택 위성의 궤도선: 위성 고유 주기를 64등분해 propagation.
