@@ -10,6 +10,7 @@ import { SatelliteLayer } from './layers/satellites';
 import { InfoCard } from './ui/infocard';
 import { LayerPanel } from './ui/panel';
 import { startClock } from './ui/clock';
+import { mountHeader } from './ui/header';
 import { setupPicking } from './core/picking';
 import { QualityMonitor, QualityController } from './core/quality';
 
@@ -135,6 +136,7 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
+mountHeader(uiRoot);
 startClock(uiRoot);
 
 app.start();

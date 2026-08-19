@@ -45,3 +45,26 @@ html, body { height: 100%; overflow: hidden; background: #000; font-family: syst
   #layer-panel { left: 0; right: 0; bottom: 0; border-radius: 16px 16px 0 0; flex-direction: row; justify-content: space-around; }
   #info-card { top: auto; bottom: 72px; right: 16px; }
 }
+
+#site-header {
+  position: fixed; top: 16px; left: 16px; max-width: min(320px, calc(100vw - 32px));
+  color: #eef; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7); pointer-events: none;
+}
+#site-header h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+#site-header p { margin-top: 4px; font-size: 12px; line-height: 1.5; opacity: 0.7; }
+#site-header a {
+  display: inline-block; margin-top: 8px; font-size: 12px; color: #9cf;
+  text-decoration: none; border-bottom: 1px solid rgba(153, 204, 255, 0.4);
+  pointer-events: auto;
+}
+#site-header a:hover { border-bottom-color: #9cf; }
+
+@media (max-width: 600px) {
+  /* 좁은 화면에서는 시계를 우상단으로 보내고 헤더 폭을 그만큼 줄여 겹치지 않게 한다.
+     시계 아래 라벨은 헤더 설명문이 같은 내용을 말하므로 감춘다. */
+  #site-header { top: 12px; left: 12px; max-width: calc(100vw - 130px); }
+  #site-header h1 { font-size: 15px; }
+  #site-header p { font-size: 11px; }
+  #utc-clock { left: auto; right: 12px; transform: none; text-align: right; }
+  #utc-clock span { display: none; }
+}

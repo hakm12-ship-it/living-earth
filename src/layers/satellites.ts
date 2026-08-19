@@ -28,8 +28,10 @@ export class SatelliteLayer implements Layer {
   private active = true;
   private onStatusChange: ((s: 'ok' | 'error' | 'loading') => void) | undefined;
   private fade = new LayerFade(this.group, false); // 기본 꺼짐(spec)
-  // 세션 내 재시도(Task: 위성 init 실패 복구) 진행 중 중복 fetch 방지 플래그.
+  // 세션 내 재시도가 진행 중일 때 중복 fetch를 막는 플래그.
   private retrying = false;
+  // 파싱된 TLE 원본. maxCount가 다시 늘어날 때 이 목록에서 재빌드한다.
+  private entries: TleEntry[] = [];
 
   constructor(onStatusChange?: (s: 'ok' | 'error' | 'loading') => void) {
     this.onStatusChange = onStatusChange;
@@ -79,6 +81,15 @@ export class SatelliteLayer implements Layer {
   }
 
   private build(entries: TleEntry[]): void {
+    this.entries = entries;
+    // 재빌드 시 인스턴스 인덱스가 달라지므로 이전 메시와 궤도선은 버린다.
+    this.hideOrbit();
+    if (this.mesh) {
+      this.group.remove(this.mesh);
+      this.mesh.geometry.dispose();
+      (this.mesh.material as THREE.Material).dispose();
+      this.mesh = null;
+    }
     const now = new Date();
     const gmst = satellite.gstime(now);
 
@@ -158,11 +169,22 @@ export class SatelliteLayer implements Layer {
   }
 
   setMaxCount(n: number): void {
+    if (n === this.maxCount) return;
+    const grew = n > this.maxCount;
     this.maxCount = n;
-    // 이미 빌드됐다면 잘라내기만 (재빌드 없이 count 축소)
-    if (this.mesh && this.satrecs.length > n) {
+    if (!this.mesh) return; // 아직 빌드 전이면 다음 빌드에 반영된다
+
+    if (grew) {
+      // 저사양 -> 고사양 복귀. 잘라낸 위성은 satrecs에 남아 있지 않으므로
+      // 보관해 둔 TLE 원본에서 다시 만든다.
+      if (this.entries.length > this.satrecs.length) this.build(this.entries);
+      return;
+    }
+    if (this.satrecs.length > n) {
       this.satrecs = this.satrecs.slice(0, n);
       this.names = this.names.slice(0, n);
+      this.prevPos = this.prevPos.slice(0, n);
+      this.nextPos = this.nextPos.slice(0, n);
       this.mesh.count = n;
     }
   }
