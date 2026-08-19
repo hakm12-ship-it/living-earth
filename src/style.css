@@ -42,8 +42,18 @@ html, body { height: 100%; overflow: hidden; background: #000; font-family: syst
 
 /* 모바일: 패널을 하단 시트 형태로 */
 @media (max-width: 600px) {
-  #layer-panel { left: 0; right: 0; bottom: 0; border-radius: 16px 16px 0 0; flex-direction: row; justify-content: space-around; }
-  #info-card { top: auto; bottom: 72px; right: 16px; }
+  /* 하단 시트. 항목이 한 줄에 다 들어가지 않으면 글자가 세로로 쪼개지므로
+     줄바꿈을 허용해 토글 줄과 버튼 줄로 자연스럽게 흐르게 둔다. */
+  #layer-panel {
+    left: 0; right: 0; bottom: 0; border-radius: 16px 16px 0 0;
+    flex-direction: row; flex-wrap: wrap; justify-content: center;
+    gap: 8px 16px;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+  }
+  .layer-toggle { padding: 0; white-space: nowrap; }
+  .panel-action { margin-top: 0; white-space: nowrap; }
+  /* 하단 시트가 두 줄이 될 수 있으므로 정보 카드를 그만큼 더 띄운다. */
+  #info-card { top: auto; bottom: 116px; right: 16px; }
 }
 
 #site-header {
