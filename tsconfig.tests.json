@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // base tsconfig.json은 "types": ["vite/client"]만 잡아준다 — tests/*.test.ts는
+    // vitest의 함수(describe/it/expect/vi)를 전부 'vitest'에서 명시적으로 import해서
+    // 쓰고 있어(전역 주입 방식이 아님) 별도 타입 지정이 필요 없다(tsconfig.e2e.json과
+    // 동일한 이유).
+    "types": []
+  },
+  "include": ["tests"]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "living-earth",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "npm run typecheck:tests && vitest run",
+    "typecheck:tests": "tsc -p tsconfig.tests.json --noEmit",
+    "typecheck:e2e": "tsc -p tsconfig.e2e.json --noEmit",
+    "e2e": "npm run typecheck:e2e && playwright test"
+  },
+  "dependencies": {
+    "satellite.js": "^7.1.0",
+    "three": "^0.185.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/three": "^0.185.4",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.1",
+    "vitest": "^4.1.11"
+  }
+}

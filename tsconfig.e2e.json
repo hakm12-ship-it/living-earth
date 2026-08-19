@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // base tsconfig.json은 "types": ["vite/client"]만 잡아준다 — e2e 코드는
+    // import.meta.env를 쓰지 않고, @playwright/test와 Buffer 등에 필요한 타입은
+    // 각 패키지가 자체 .d.ts로 이미 내보내므로 별도 지정이 필요 없다.
+    "types": []
+  },
+  "include": ["e2e", "playwright.config.ts"]
+}
