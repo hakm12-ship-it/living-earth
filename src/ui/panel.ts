@@ -1,8 +1,8 @@
-// 좌하단 글래스 패널: 레이어 표시 토글 + 상태(로딩/에러) 표시.
+// 좌하단 레이어 범례 겸 스위치. 점 색은 지구본 마커 색과 같고, 점 자체가 토글이다.
 export type PanelItem = {
   id: string;
   label: string;
-  // 범례 점의 색. 해당 레이어가 실제로 그리는 마커 색과 일치시킨다.
+  // 범례 점이자 스위치의 색. 해당 레이어가 지구본에 실제로 그리는 마커 색과 일치시킨다.
   color: string;
   defaultOn: boolean;
   onToggle: (on: boolean) => void;
@@ -26,17 +26,17 @@ export class LayerPanel {
         (item) => `
       <label class="layer-toggle" data-layer="${item.id}">
         <input type="checkbox" data-testid="toggle-${item.id}" ${item.defaultOn ? 'checked' : ''} />
-        <span class="dot"></span>
         <span class="label">${item.label}</span>
-        <span class="status" hidden>일시적으로 사용 불가</span>
+        <span class="status" hidden>연결 안 됨</span>
       </label>`,
       )
       .join('');
     root.appendChild(this.el);
 
     for (const item of items) {
-      const row = this.el.querySelector(`[data-layer="${item.id}"]`)!;
-      row.querySelector<HTMLElement>('.dot')!.style.background = item.color;
+      const row = this.el.querySelector<HTMLElement>(`[data-layer="${item.id}"]`)!;
+      // 점 색은 CSS 변수로 넘긴다 — 스위치(=input)를 그 색으로 칠하는 건 스타일 쪽 일이다.
+      row.style.setProperty('--dot', item.color);
       const input = row.querySelector<HTMLInputElement>('input')!;
       input.addEventListener('change', () => item.onToggle(input.checked));
     }
@@ -55,13 +55,15 @@ export class LayerPanel {
     for (const item of this.items) item.onToggle(item.defaultOn);
   }
 
-  // 패널 하단에 클릭 가능한 액션 버튼을 추가한다(예: 수동 저사양 모드 전환).
-  addAction(label: string, onClick: () => void): void {
+  // 패널 아래에 동작 버튼을 추가하고 그 버튼을 돌려준다.
+  // 호출부가 라벨을 상태에 맞게 바꿀 수 있어야 하기 때문이다.
+  addAction(label: string, onClick: () => void): HTMLButtonElement {
     const btn = document.createElement('button');
     btn.className = 'panel-action';
     btn.textContent = label;
     btn.addEventListener('click', onClick);
     this.el.appendChild(btn);
+    return btn;
   }
 
   setStatus(id: string, s: 'ok' | 'error' | 'loading'): void {

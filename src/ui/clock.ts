@@ -8,7 +8,7 @@ export function startClock(root: HTMLElement): void {
     const hh = String(now.getUTCHours()).padStart(2, '0');
     const mm = String(now.getUTCMinutes()).padStart(2, '0');
     const ss = String(now.getUTCSeconds()).padStart(2, '0');
-    el.innerHTML = `<strong>${hh}:${mm}:${ss} UTC</strong><span>낮/밤 경계는 실시간입니다</span>`;
+    el.textContent = `${hh}:${mm}:${ss} UTC`;
   };
   render();
   setInterval(render, 1000);

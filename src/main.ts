@@ -118,11 +118,23 @@ const qualityController = new QualityController(applyQuality);
 // 않는다. 반면 진짜 느린 프레임(GC/레이아웃 스톨 포함)은 그대로 반영되어 저사양 판정에
 // 기여한다.
 const quality = new QualityMonitor(3000, 30);
-quality.onDecide((level) => qualityController.autoDecide(level));
+quality.onDecide((level) => {
+  qualityController.autoDecide(level);
+  syncQualityLabel();
+});
 app.onFrame((time) => quality.recordFrame(time));
 
-// 수동 저사양 토글: 사용자가 누르면 그 순간부터 자동 판정보다 우선한다(QualityController).
-panel.addAction('저사양 모드 전환', () => qualityController.manualToggle());
+// 수동 화질 토글: 사용자가 누르면 그 순간부터 자동 판정보다 우선한다(QualityController).
+// 라벨은 "지금 상태"가 아니라 "누르면 무엇이 되는지"를 말한다.
+const qualityBtn = panel.addAction('가볍게 보기', () => {
+  qualityController.manualToggle();
+  syncQualityLabel();
+});
+
+// 자동 판정으로 프로파일이 바뀔 때도 라벨이 어긋나지 않도록 갱신을 한 곳에 모은다.
+function syncQualityLabel(): void {
+  qualityBtn.textContent = qualityController.getLevel() === 'low' ? '선명하게 보기' : '가볍게 보기';
+}
 
 // 백그라운드 탭: 렌더 루프와 데이터 폴링을 일시정지하고, 복귀 시 재개한다.
 // QualityMonitor에도 동일한 신호를 명시적으로 전달해(pause/resume) 측정 구간과 탭 전환이

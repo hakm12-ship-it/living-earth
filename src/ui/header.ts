@@ -11,13 +11,14 @@ export function mountHeader(root: HTMLElement): void {
   title.textContent = '살아있는 지구';
 
   const desc = document.createElement('p');
-  desc.textContent = '낮/밤 경계, 지진, ISS, 위성 궤도 — 모두 지금 이 순간의 실제 데이터';
+  desc.className = 'source';
+  desc.textContent = 'USGS · NASA · CelesTrak';
 
   const link = document.createElement('a');
   link.href = SOURCE_URL;
   link.target = '_blank';
   link.rel = 'noopener noreferrer';
-  link.textContent = 'GitHub에서 소스 보기';
+  link.textContent = 'SOURCE ↗';
 
   el.append(title, desc, link);
   root.appendChild(el);
