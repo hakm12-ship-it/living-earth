@@ -11,6 +11,7 @@ import { InfoCard } from './ui/infocard';
 import { LayerPanel } from './ui/panel';
 import { startClock } from './ui/clock';
 import { mountHeader } from './ui/header';
+import { inject as injectAnalytics } from '@vercel/analytics';
 import { setupPicking } from './core/picking';
 import { QualityMonitor, QualityController } from './core/quality';
 
@@ -138,6 +139,9 @@ document.addEventListener('visibilitychange', () => {
 
 mountHeader(uiRoot);
 startClock(uiRoot);
+
+// 방문 통계(Vercel Web Analytics). 쿠키를 쓰지 않고 개별 방문자를 추적하지 않는다.
+injectAnalytics();
 
 app.start();
 

@@ -13,6 +13,7 @@
     "e2e": "npm run typecheck:e2e && playwright test"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "satellite.js": "^7.1.0",
     "three": "^0.185.1"
   },

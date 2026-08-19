@@ -192,9 +192,20 @@ test('위성 토글을 켜면 위성 마커가 실제로 화면에 나타난다 
     }
 
     await toggle.click(); // 켜기
-    await page.waitForTimeout(600); // TLE 빌드/렌더 반영 대기
-    const on = await capturePixels(page, box);
-    const count = countSatelliteColorPixels(on, excludePanel);
+
+    // 고정 대기 대신 조건이 만족될 때까지 폴링한다. 병렬 실행 시 GPU 경합으로
+    // 첫 렌더가 늦어지면 고정 대기는 그대로 실패해버린다(이 테스트가 단독으로는
+    // 통과하고 전체 실행에서만 실패하던 원인).
+    // 스크린샷 한 장이 GPU 리드백 때문에 수 초씩 걸리므로 촘촘히 폴링하면 오히려
+    // 테스트 타임아웃을 넘긴다. 렌더가 늦는 경우를 대비해 최대 두 번만 더 본다.
+    let count = 0;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await page.waitForTimeout(attempt === 0 ? 600 : 1200);
+      const on = await capturePixels(page, box);
+      count = countSatelliteColorPixels(on, excludePanel);
+      if (count > 3) break;
+    }
+
     maxCount = Math.max(maxCount, count);
     await toggle.click(); // 다음 시도를 위해 원복
     await page.waitForTimeout(200);
