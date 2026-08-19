@@ -7,6 +7,8 @@ export type Earthquake = {
   lat: number;
   lon: number;
   mag: number;
+  /** 진원 깊이(km). 피드에 없으면 0. 얕을수록 지표에서 크게 느껴진다. */
+  depthKm: number;
   time: number;
   place: string;
 };
@@ -21,12 +23,13 @@ export function parseUsgs(geojson: unknown): Earthquake[] {
     const props = (f as { properties?: { mag?: unknown; time?: unknown; place?: unknown } })?.properties;
     const coords = (f as { geometry?: { coordinates?: unknown[] } })?.geometry?.coordinates;
     if (!props || !Array.isArray(coords)) continue;
-    const [lon, lat] = coords;
+    const [lon, lat, depth] = coords;
     if (typeof props.mag !== 'number' || typeof lat !== 'number' || typeof lon !== 'number') continue;
     out.push({
       lat,
       lon,
       mag: props.mag,
+      depthKm: typeof depth === 'number' ? depth : 0,
       time: typeof props.time === 'number' ? props.time : 0,
       place: typeof props.place === 'string' ? props.place : '',
     });

@@ -216,11 +216,13 @@ setupPicking(app, [
   {
     object: () => earthquakeLayer.markers,
     onPick: (hit) => {
-      const q = hit.instanceId !== undefined ? earthquakeLayer.getQuakeAt(hit.instanceId) : undefined;
+      // 지진 마커는 THREE.Points라 instanceId가 아니라 index로 식별한다.
+      const q = hit.index !== undefined ? earthquakeLayer.getQuakeAt(hit.index) : undefined;
       if (!q) return;
       satelliteLayer.hideOrbit(); // 다른 대상을 고르면 이전 위성 궤도선은 정리한다
       infoCard.show(`규모 ${q.mag.toFixed(1)} 지진`, [
         ['위치', q.place || `${q.lat.toFixed(2)}, ${q.lon.toFixed(2)}`],
+        ['깊이', `${q.depthKm.toFixed(0)} km`],
         ['발생', new Date(q.time).toLocaleString('ko-KR')],
         ['좌표', `${q.lat.toFixed(2)}°, ${q.lon.toFixed(2)}°`],
       ]);

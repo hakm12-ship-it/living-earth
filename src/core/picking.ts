@@ -8,6 +8,10 @@ export type PickTarget = {
 
 export function setupPicking(app: SceneApp, targets: PickTarget[]): void {
   const raycaster = new THREE.Raycaster();
+  // THREE.Points는 화면상 점 크기와 무관하게 이 임계값(월드 단위) 안에 들어와야
+  // 교차로 잡힌다. 기본값 1은 지구본(반지름 1) 기준으로 너무 커서 아무 데나 맞고,
+  // 0이면 절대 맞지 않는다. 지진 마커 간격을 고려해 작게 잡는다.
+  raycaster.params.Points.threshold = 0.015;
   const pointer = new THREE.Vector2();
   let downAt: { x: number; y: number } | null = null;
 
